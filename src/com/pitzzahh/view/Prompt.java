@@ -1,0 +1,25 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package com.pitzzahh.view;
+
+import java.util.function.BiConsumer;
+import javax.swing.*;
+
+/**
+ *
+ * @author peter john
+ */
+public class Prompt {
+    
+    /**
+     * Function that shows a custom message dialog.
+     * Checks if the prompt is for error or for information message.
+     * If the prompt is for error, it shows a message dialog that informs the user what is the error.
+     * If the prompt is for information message, the message will be based on the methods that invoked the Function.
+     */
+    public final BiConsumer<String, Boolean> show = (message, isError) -> JOptionPane.showMessageDialog(null, message, (isError ? "SOMETHING WENT WRONG" : "SUCCESS"), (isError ? JOptionPane.WARNING_MESSAGE : JOptionPane.INFORMATION_MESSAGE));
+
+}
