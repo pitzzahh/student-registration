@@ -77,28 +77,10 @@ public class Main extends javax.swing.JFrame {
      * <p>Lastly, looping from the {@code students} ArrayList and adding each student in the row of the table.</p>
      */
     private void refreshTable(boolean isSearching) {
-        if(isSearching) {
-            try {
-                Main.DATABASE_CONNECTION.search(Main.DATABASE_CONNECTION, makeStudentFromTextField(), getSearchingType());
-                DefaultTableModel defaultTableModel = (DefaultTableModel) table.getModel();
-                defaultTableModel.setRowCount(0);
-                Object[] data = new Object[defaultTableModel.getColumnCount()];
+        try {
+            if(isSearching) Main.DATABASE_CONNECTION.search(Main.DATABASE_CONNECTION, makeStudentFromTextField(), getSearchingType());
+            else  Main.DATABASE_CONNECTION.getAllData();
 
-
-                for (Student student : students) {
-                    data[0] = student.getStudentNumber();
-                    data[1] = student.getName();
-                    data[2] = student.getAge();
-                    data[3] = student.getAddress();
-                    data[4] = student.getCourse();
-                    defaultTableModel.addRow(data);
-                }
-
-            } catch(RuntimeException runtimeException) {
-                PROMPT.show.accept(runtimeException.getMessage(), true);
-            }
-        } else {
-            Main.DATABASE_CONNECTION.getAllData();
             DefaultTableModel defaultTableModel = (DefaultTableModel) table.getModel();
             defaultTableModel.setRowCount(0);
             Object[] data = new Object[defaultTableModel.getColumnCount()];
@@ -111,6 +93,9 @@ public class Main extends javax.swing.JFrame {
                 data[4] = student.getCourse();
                 defaultTableModel.addRow(data);
             }
+
+        } catch(RuntimeException runtimeException) {
+            PROMPT.show.accept(runtimeException.getMessage(), true);
         }
         students.clear();
     }
