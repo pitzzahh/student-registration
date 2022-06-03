@@ -4,7 +4,6 @@
  */
 package com.pitzzahh.database;
 
-import entity.Student;
 import java.sql.ResultSet;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -13,6 +12,7 @@ import com.pitzzahh.view.Main;
 import java.sql.ResultSetMetaData;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import com.pitzzahh.entity.Student;
 import com.pitzzahh.validation.Validation;
 import com.pitzzahh.exception.StudentNotFoundException;
 
@@ -21,18 +21,23 @@ import com.pitzzahh.exception.StudentNotFoundException;
  * @author peter
  */
 public class DatabaseConnection {
-    public static String TABLE_NAME;
-    public static String CREATE_TABLE_STATEMENT = "CREATE TABLE IF NOT EXISTS students (" +
-                                                        "student_number VARCHAR(10) NOT NULL PRIMARY KEY," +
-                                                        "name VARCHAR(50) NULL, " +
-                                                        "age INT NOT NULL," +
-                                                        "address VARCHAR(150) NOT NULL," +
-                                                        "course VARCHAR(100) NOT NULL);";
+    private static String TABLE_NAME;
+    private static final String CREATE_TABLE_STATEMENT = "CREATE TABLE IF NOT EXISTS students (" +
+                                                  "student_number VARCHAR(10) NOT NULL PRIMARY KEY," +
+                                                  "name VARCHAR(50) NULL, " +
+                                                  "age INT NOT NULL," +
+                                                  "address VARCHAR(150) NOT NULL," +
+                                                  "course VARCHAR(100) NOT NULL);";
+
+    /**
+     * public Constructor.
+     * This creates a connection to the database.
+     */
     public DatabaseConnection() {
         try {
             Consumer<Connection> createTable = connection -> {
                 try {
-                    TABLE_NAME = getTableName(CREATE_TABLE_STATEMENT);
+                    TABLE_NAME = getTableName();
                     connection.prepareStatement(CREATE_TABLE_STATEMENT).executeUpdate();
                     connection.close();
                 } catch (SQLException e) {
@@ -76,17 +81,17 @@ public class DatabaseConnection {
 
     /**
      * Method that gets the table name from the {@code CREATE_TABLE_STATEMENT}
-     * @param statement the {@code CREATE_TABLE_STATEMENT}
+     *
      * @return the name of the table in the database.
      */
-    private static String getTableName(String statement) {
-        int[] subStrings = {statement.contains("EXISTS") ? statement.indexOf("EXISTS") + 6 : statement.indexOf("exists") + 6, statement.indexOf("(") - 1};
-        return statement.substring(subStrings[0], subStrings[1]).trim();
+    private static String getTableName() {
+        int[] subStrings = {DatabaseConnection.CREATE_TABLE_STATEMENT.indexOf("EXISTS") + 6, DatabaseConnection.CREATE_TABLE_STATEMENT.indexOf("(") - 1};
+        return DatabaseConnection.CREATE_TABLE_STATEMENT.substring(subStrings[0], subStrings[1]).trim();
     }
 
     /**
      * Method that gets all the columns in the table.
-     * @return {@code String[]} an array containing all the columns of the table.
+     * @return {@code String[]} containing all the columns of the table.
      */
     public String[] getAllTableColumnName() {
         try {

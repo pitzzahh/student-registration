@@ -13,29 +13,15 @@ import java.util.regex.Pattern;
 import java.sql.SQLException;
 import java.sql.ResultSet;
 
+import static com.pitzzahh.database.Process.getStudentNumber;
+
 /**
  *
  * @author peter
  */
 public class Validation {
-    /**
-    * Method that returns the studentNumber of the student.
-    * @param databaseConnection database connection needed to connect to the database.
-    * @param studentNumber the studentNumber needed to get the studentNumber of the user. (checks if the studentNumber exists in the table)
-    * @return {@code studentNumber} of the student from the table.
-    */
-    public static String getStudentNumber(DatabaseConnection databaseConnection, String studentNumber) {
-        try {
-            ResultSet resultSet = databaseConnection.connect().createStatement().executeQuery(Process.GET_STUDENT_NUMBER_QUERY.apply(studentNumber));
-            if (resultSet.next()) return resultSet.getString("student_number");
-        } catch (SQLException ignored) {
-            throw new StudentNotFoundException();
-        }
-        return "0";
-    }
-    
 
-    
+
     /**
      * Function that validates if the student exists on the table from the database.
      */

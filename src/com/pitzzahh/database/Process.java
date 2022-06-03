@@ -7,17 +7,21 @@ package com.pitzzahh.database;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.io.BufferedWriter;
-import com.pitzzahh.view.Main;
+
+import com.pitzzahh.entity.Student;
+import com.pitzzahh.validation.StudentRegistrationValidator;
+
 import java.sql.PreparedStatement;
 import java.util.function.Function;
-import com.pitzzahh.validation.Validation;
+
+import static com.pitzzahh.validation.StudentRegistrationValidator.ValidationResult.SUCCESS;
 import static com.pitzzahh.view.Main.PROMPT;
 import com.pitzzahh.exception.StudentNotFoundException;
 import com.pitzzahh.exception.StudentAlreadyExistsException;
 import com.pitzzahh.exception.InvalidStudentNumberException;
-import static com.pitzzahh.validation.Validation.getStudentNumber;
 
 /**
  *
@@ -39,7 +43,23 @@ public class Process {
         bufferedWriter.newLine();
         bufferedWriter.close();
     }
-    
+
+    /**
+     * Method that returns the studentNumber of the student.
+     * @param databaseConnection database connection needed to connect to the database.
+     * @param studentNumber the studentNumber needed to get the studentNumber of the user. (checks if the studentNumber exists in the table)
+     * @return {@code studentNumber} of the student from the table.
+     */
+    public static String getStudentNumber(DatabaseConnection databaseConnection, String studentNumber) {
+        try {
+            ResultSet resultSet = databaseConnection.connect().createStatement().executeQuery(Process.GET_STUDENT_NUMBER_QUERY.apply(studentNumber));
+            if (resultSet.next()) return resultSet.getString("student_number");
+        } catch (SQLException ignored) {
+            throw new StudentNotFoundException();
+        }
+        return "0";
+    }
+
      /**
      * Method that inserts data from the table.
      *
@@ -63,7 +83,7 @@ public class Process {
             PreparedStatement preparedStatement = databaseConnection.connect().prepareStatement(INSERT_STATEMENT);
             preparedStatement.setString(1, studentNumber);
             preparedStatement.setString(2, name);
-            preparedStatement.setInt(3, Integer.valueOf(age.trim()));
+            preparedStatement.setInt(3, Integer.parseInt(age.trim()));
             preparedStatement.setString(4, address);
             preparedStatement.setString(5, course);  
             
@@ -91,36 +111,35 @@ public class Process {
     
     /**
      * Method that updates the student info from the table in the database.
+     * Reads the selected row where the user right-clicked. Selects the selected row from the table and outputs
+     * in the text fields ready to be modified.
      * @param databaseConnection database connection object needed to connect to the database.
-     * @param studentNumber the student number needed to look up for student row to be updated.
-     * @param name the new name of the student.
-     * @param age the new age of the student.
-     * @param address the new address of the student.
-     * @param course the new course of the student.
+     * @param newStudentUpdate the new {@code Student} to be updated into the table.
+     * @param oldStudent the old {@code Student} to be checked if exists from the table.
      */
-    public static void updateStudent(
-        DatabaseConnection databaseConnection, 
-        String studentNumber, 
-        String name,
-        String age,
-        String address,
-        String course) {
-
+    public static void updateStudent(DatabaseConnection databaseConnection, Student newStudentUpdate, Student oldStudent) {
         try {
-            String studentNumberFromSelectedRow = String.valueOf(Main.table.getModel().getValueAt(Main.table.getSelectedRow(), 0));
-            final String UPDATE_STATEMENT = "UPDATE students " + 
-                                            "SET student_number = ?, name = ?, age = ?, address = ?, course = ? " +
-                                            "WHERE student_number = " + "'" + studentNumberFromSelectedRow + "'";
-            if(Validation.IS_STUDENT_NUMBER_VALID.negate().test(studentNumber.trim())) throw new InvalidStudentNumberException(studentNumber.trim());
-            if(Validation.IS_STUDENT_NUMBER_EXISTS.negate().test(studentNumberFromSelectedRow, databaseConnection)) throw new StudentNotFoundException();
+            final String UPDATE_STATEMENT = "UPDATE students " +
+                                            "SET student_number = ?, " +
+                                            "name = ?, " +
+                                            "age = ?, " +
+                                            "address = ?, " +
+                                            "course = ? " +
+                                            "WHERE student_number = " + "'" + oldStudent.getStudentNumber() + "'";
+
+            if(StudentRegistrationValidator.isStudentNumberValid().apply(newStudentUpdate) != SUCCESS) throw new InvalidStudentNumberException(String.valueOf(newStudentUpdate.getStudentNumber()).trim());
+            if(StudentRegistrationValidator.isStudentAlreadyExists(databaseConnection).apply(oldStudent) != SUCCESS) throw new StudentNotFoundException();
+
             PreparedStatement preparedStatement = databaseConnection.connect().prepareStatement(UPDATE_STATEMENT);
-            preparedStatement.setString(1, studentNumber.trim());
-            preparedStatement.setString(2, name.trim());
-            preparedStatement.setInt(3, Integer.valueOf(age.trim()));
-            preparedStatement.setString(4, address.trim());
-            preparedStatement.setString(5, course.trim()); 
+            preparedStatement.setString(1, String.valueOf(newStudentUpdate.getStudentNumber()).trim());
+            preparedStatement.setString(2, newStudentUpdate.getName().trim());
+            preparedStatement.setInt(3, newStudentUpdate.getAge());
+            preparedStatement.setString(4, newStudentUpdate.getAddress().trim());
+            preparedStatement.setString(5, newStudentUpdate.getCourse().trim());
             preparedStatement.executeUpdate();
+
         } catch (SQLException sqlException) {
+            sqlException.printStackTrace();
             PROMPT.show.accept(sqlException.getMessage(), true);
         }
     }
@@ -135,9 +154,5 @@ public class Process {
      * Function that returns a String query in getting the all the student info from the table in the database.
      */
     public static final Function<String, String> GET_STUDENT_QUERY = studentNumber -> "SELECT * FROM students WHERE student_number = " + "'" + studentNumber + "'";
-    
-    public static void main(String[] args) {
-        Object[] student = DatabaseConnection.search(Main.DATABASE_CONNECTION, "2000263444");
-        System.out.println(student.toString());
-    }
+
 }

@@ -5,17 +5,26 @@
 package com.pitzzahh.view;
 
 import java.awt.*;
-import entity.Student;
+
+import com.pitzzahh.entity.Courses;
+import com.pitzzahh.entity.Student;
+
+import java.util.Arrays;
 import java.util.Objects;
 import javax.swing.JLabel;
 import java.util.ArrayList;
 import com.pitzzahh.database.Process;
+import com.pitzzahh.exception.EmptyTableException;
+import com.pitzzahh.validation.StudentRegistrationValidator;
 import com.pitzzahh.validation.Validation;
 import javax.swing.table.DefaultTableModel;
 import com.pitzzahh.database.DatabaseConnection;
 import javax.swing.table.DefaultTableCellRenderer;
 import com.pitzzahh.exception.BlankTextFieldsException;
 import com.pitzzahh.exception.InvalidStudentNumberException;
+
+import static com.pitzzahh.database.Process.getStudentNumber;
+import static com.pitzzahh.validation.StudentRegistrationValidator.ValidationResult.SUCCESS;
 
 /**
  *
@@ -32,13 +41,21 @@ public class Main extends javax.swing.JFrame {
      */
     public Main() {
         initComponents();
+        Courses[] courses = Courses.values();
+        String[] courseList = new String[courses.length];
+
+        Arrays.stream(courses).forEach(course -> courseList[course.ordinal()] = course.getDescription());
+
+        course.setModel(new javax.swing.DefaultComboBoxModel<>(courseList));
+
+        setIconImage(Toolkit.getDefaultToolkit().getImage("src/com/pitzzahh/icons/ico.png"));
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(JLabel.CENTER);
-        table.getColumnModel().getColumn(0).setCellRenderer( centerRenderer );
-        table.getColumnModel().getColumn(2).setCellRenderer( centerRenderer );
-        setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/com/pitzzahh/icons/ico.png")));
+        table.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
+        table.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);
         refreshTable(false, "");
     }
+
     /**
      * Method that refresh the table.
      * <p>First it checks if the method is used for searching a student</p>
@@ -82,7 +99,7 @@ public class Main extends javax.swing.JFrame {
     public boolean areTextFieldsEmpty() {
         return studentNumber.getText().trim().isEmpty() || name.getText().trim().isEmpty() || age.getText().trim().isEmpty() || address.getText().trim().isEmpty();
     }
-    
+
     /**
      * Method that removes all the current values that are in the text fields
      */
@@ -92,7 +109,17 @@ public class Main extends javax.swing.JFrame {
         age.setText(" ");
         address.setText(" ");
     }
-    
+
+    private Student makeStudent() {
+        return new Student(
+                Integer.parseInt(studentNumber.getText().trim()),
+                name.getText().trim(),
+                Byte.parseByte(age.getText().trim()),
+                address.getText().trim(),
+                course.getItemAt(course.getSelectedIndex()).trim()
+        );
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -123,6 +150,7 @@ public class Main extends javax.swing.JFrame {
         headerPanel = new javax.swing.JPanel();
         header = new javax.swing.JLabel();
         refresh = new javax.swing.JButton();
+        searchingType = new javax.swing.JComboBox<>();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -245,7 +273,6 @@ public class Main extends javax.swing.JFrame {
         picture.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/pitzzahh/icons/students.png"))); // NOI18N
 
         course.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-        course.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Bachelor of Science in Information Technology", "Bachelor of Science in Computer Science", "Bachelor of Science in Information Systems", "Bachelor of Science in Business Administration", "Bachelor of Science in Accountancy", "Bachelor of Science in Accounting Information System", "Bachelor of Science in Retail Technology and Consumer Science", "Bachelor of Science in Management Accounting", "Bachelor of Science in Hospitality Management", "Bachelor of Science in Culinary Management", "Bachelor of Science in Tourism Management", "Bachelor of Science in Computer Engineering", "Bachelor of Multimedia Arts", "Bachelor of Arts in Communication" }));
 
         headerPanel.setBackground(new java.awt.Color(204, 204, 204));
 
@@ -274,59 +301,58 @@ public class Main extends javax.swing.JFrame {
             }
         });
 
+        searchingType.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "SEARCH BY STUDENT NUMBER", "SEARCH BY NAME", "SEARCH BY ADDRESS", "SEARCH BY COURSE", "SEARCH BY STUDENT NUMBER AND NAME", "SEARCH BY STUDENT NUMBER AND COURSE" }));
+
         javax.swing.GroupLayout panelLayout = new javax.swing.GroupLayout(panel);
         panel.setLayout(panelLayout);
         panelLayout.setHorizontalGroup(
             panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelLayout.createSequentialGroup()
-                .addGroup(panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(panelLayout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(tableScroll))
-                    .addGroup(panelLayout.createSequentialGroup()
-                        .addGap(48, 48, 48)
-                        .addGroup(panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(panelLayout.createSequentialGroup()
-                                .addComponent(addressLabel)
-                                .addGap(6, 6, 6)
-                                .addComponent(address))
-                            .addGroup(panelLayout.createSequentialGroup()
-                                .addComponent(courseLabel)
-                                .addGroup(panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(panelLayout.createSequentialGroup()
-                                        .addGap(8, 8, 8)
-                                        .addComponent(course, 0, 1, Short.MAX_VALUE))
-                                    .addGroup(panelLayout.createSequentialGroup()
-                                        .addGap(6, 6, 6)
-                                        .addComponent(add)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(delete)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(search)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(save)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(refresh, javax.swing.GroupLayout.PREFERRED_SIZE, 77, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGap(0, 0, Short.MAX_VALUE))))
-                            .addGroup(panelLayout.createSequentialGroup()
-                                .addComponent(ageLabel)
-                                .addGap(6, 6, 6)
-                                .addComponent(age))
-                            .addGroup(panelLayout.createSequentialGroup()
-                                .addComponent(studentNumberLabel)
-                                .addGap(6, 6, 6)
-                                .addComponent(studentNumber))
-                            .addGroup(panelLayout.createSequentialGroup()
-                                .addComponent(nameLabel)
-                                .addGap(6, 6, 6)
-                                .addComponent(name)))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(picture, javax.swing.GroupLayout.PREFERRED_SIZE, 479, Short.MAX_VALUE)))
+                .addContainerGap()
+                .addComponent(tableScroll)
                 .addGap(16, 16, 16))
             .addGroup(panelLayout.createSequentialGroup()
-                .addContainerGap(145, Short.MAX_VALUE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(headerPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(146, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(panelLayout.createSequentialGroup()
+                .addGap(48, 48, 48)
+                .addGroup(panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(panelLayout.createSequentialGroup()
+                        .addComponent(addressLabel)
+                        .addGap(6, 6, 6)
+                        .addComponent(address))
+                    .addGroup(panelLayout.createSequentialGroup()
+                        .addComponent(courseLabel)
+                        .addGap(8, 8, 8)
+                        .addComponent(course, 0, 1, Short.MAX_VALUE))
+                    .addGroup(panelLayout.createSequentialGroup()
+                        .addComponent(ageLabel)
+                        .addGap(6, 6, 6)
+                        .addComponent(age))
+                    .addGroup(panelLayout.createSequentialGroup()
+                        .addComponent(studentNumberLabel)
+                        .addGap(6, 6, 6)
+                        .addComponent(studentNumber))
+                    .addGroup(panelLayout.createSequentialGroup()
+                        .addComponent(nameLabel)
+                        .addGap(6, 6, 6)
+                        .addComponent(name))
+                    .addGroup(panelLayout.createSequentialGroup()
+                        .addComponent(add)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(delete)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(refresh, javax.swing.GroupLayout.PREFERRED_SIZE, 77, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(search)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(save)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(searchingType, 0, 95, Short.MAX_VALUE)))
+                .addGap(18, 18, 18)
+                .addComponent(picture)
+                .addContainerGap())
         );
         panelLayout.setVerticalGroup(
             panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -334,43 +360,39 @@ public class Main extends javax.swing.JFrame {
                 .addGap(13, 13, 13)
                 .addComponent(headerPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(panelLayout.createSequentialGroup()
-                        .addGroup(panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                            .addComponent(picture, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                            .addGroup(panelLayout.createSequentialGroup()
-                                .addGroup(panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(studentNumberLabel)
-                                    .addComponent(studentNumber, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGap(12, 12, 12)
-                                .addGroup(panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(nameLabel)
-                                    .addComponent(name, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGap(16, 16, 16)
-                                .addGroup(panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(ageLabel)
-                                    .addComponent(age, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGap(12, 12, 12)
-                                .addGroup(panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(addressLabel)
-                                    .addComponent(address, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGap(12, 12, 12)
-                                .addGroup(panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(courseLabel)
-                                    .addComponent(course, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGap(39, 39, 39)))
-                        .addGap(30, 30, 30))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panelLayout.createSequentialGroup()
                         .addGroup(panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(add)
-                                .addComponent(delete)
-                                .addComponent(search)
-                                .addComponent(save))
-                            .addComponent(refresh))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)))
-                .addComponent(tableScroll, javax.swing.GroupLayout.DEFAULT_SIZE, 110, Short.MAX_VALUE)
-                .addGap(16, 16, 16))
+                            .addComponent(studentNumberLabel)
+                            .addComponent(studentNumber, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(12, 12, 12)
+                        .addGroup(panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(nameLabel)
+                            .addComponent(name, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(12, 12, 12)
+                        .addGroup(panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(ageLabel)
+                            .addComponent(age, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(12, 12, 12)
+                        .addGroup(panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(addressLabel)
+                            .addComponent(address, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(12, 12, 12)
+                        .addGroup(panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(courseLabel)
+                            .addComponent(course, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(35, 35, 35)
+                        .addGroup(panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(add)
+                            .addComponent(delete)
+                            .addComponent(search)
+                            .addComponent(save)
+                            .addComponent(refresh)
+                            .addComponent(searchingType, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addComponent(picture, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                .addGap(36, 36, 36)
+                .addComponent(tableScroll, javax.swing.GroupLayout.DEFAULT_SIZE, 92, Short.MAX_VALUE)
+                .addGap(9, 9, 9))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -381,7 +403,7 @@ public class Main extends javax.swing.JFrame {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(panel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(panel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
         pack();
@@ -392,42 +414,58 @@ public class Main extends javax.swing.JFrame {
      * @param evt not used.
      */
     private void searchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchActionPerformed
-        if(Validation.IS_STUDENT_NUMBER_VALID.negate().test(studentNumber.getText().trim())) PROMPT.show.accept("INVALID STUDENT NUMBER!", true);
-        else if(table.getModel().getRowCount() == 0 && students.isEmpty()) PROMPT.show.accept("NO DATA TO BE SEARCH!", true);
-        else{
-            refreshTable(true, studentNumber.getText().trim());
-            if(table.getModel().getRowCount() == 1 && String.valueOf(table.getModel().getValueAt(0, 0)).equals(studentNumber.getText().trim())) PROMPT.show.accept("SEARCHED SUCCESSFULLY", false);
-            removeTextFieldsValues();
-        }
+        if(table.getModel().getRowCount() == 0 && students.isEmpty()) throw new EmptyTableException("NO DATA TO BE SEARCHED");
+        if (areTextFieldsEmpty()) throw new BlankTextFieldsException();
+
+        Student student = makeStudent();
+
+        if(StudentRegistrationValidator.isStudentNumberValid().apply(student) != SUCCESS) throw new InvalidStudentNumberException(String.valueOf(student.getStudentNumber()));
+        refreshTable(true, studentNumber.getText().trim());
+        if(table.getModel().getRowCount() == 1 && String.valueOf(table.getModel().getValueAt(0, 0)).equals(String.valueOf(student.getStudentNumber()).trim())) PROMPT.show.accept("SEARCHED SUCCESSFULLY", false);
+        removeTextFieldsValues();
+
     }//GEN-LAST:event_searchActionPerformed
 
     private void saveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveActionPerformed
-        if(table.getModel().getRowCount() == 0) PROMPT.show.accept("NO DATA TO BE SAVED!", true);
-        else {
-            try {
-                if(areTextFieldsEmpty()) throw new BlankTextFieldsException();
-                Process.updateStudent(
-                    DATABASE_CONNECTION, 
-                    studentNumber.getText(), 
-                    name.getText(), 
-                    age.getText(), 
-                    address.getText(), 
-                    course.getItemAt(course.getSelectedIndex()));
-                PROMPT.show.accept("EDITED SUCCESSFULLY", false);
-            } catch (RuntimeException runtimeException) {
-                PROMPT.show.accept(runtimeException.getMessage(), true);
-            }
-            students.clear();
-            removeTextFieldsValues();
-            refreshTable(false, "");
+
+        try {
+            if(table.getModel().getRowCount() == 0) throw new EmptyTableException("NO DATA TO BE SAVED");
+            if(areTextFieldsEmpty()) throw new BlankTextFieldsException();
+
+            String studentNumberFromSelectedRow = String.valueOf(table.getModel().getValueAt(table.getSelectedRow(), 0));
+            String studentNameFromSelectedRow = String.valueOf(table.getModel().getValueAt(table.getSelectedRow(), 1));
+            String studentAgeFromSelectedRow = String.valueOf(table.getModel().getValueAt(table.getSelectedRow(), 2));
+            String studentAddressFromSelectedRow = String.valueOf(table.getModel().getValueAt(table.getSelectedRow(), 3));
+            String studentCourseFromSelectedRow = String.valueOf(table.getModel().getValueAt(table.getSelectedRow(), 4));
+
+            Student newStudent = makeStudent();
+
+            Student oldStudent = new Student(
+                    Integer.parseInt(studentNumberFromSelectedRow.trim()),
+                    studentNameFromSelectedRow,
+                    Byte.parseByte(studentAgeFromSelectedRow.trim()),
+                    studentAddressFromSelectedRow,
+                    studentCourseFromSelectedRow
+            );
+
+            Process.updateStudent(DATABASE_CONNECTION, newStudent, oldStudent);
+
+            PROMPT.show.accept("EDITED SUCCESSFULLY", false);
+
+        } catch (RuntimeException runtimeException) {
+            runtimeException.printStackTrace();
+            PROMPT.show.accept(runtimeException.getMessage(), true);
         }
+        students.clear();
+        removeTextFieldsValues();
+        refreshTable(false, "");
     }//GEN-LAST:event_saveActionPerformed
 
     private void deleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteActionPerformed
         if(table.getModel().getRowCount() == 0 || areTextFieldsEmpty()) PROMPT.show.accept("NO DATA TO BE REMOVED!\nPLEASE SELECT A ROW FROM THE TABLE IF DATA IS AVAILABLE", true);
         else{
             String studentNumberFromSelectedRow = String.valueOf(table.getModel().getValueAt(table.getSelectedRow(), 0));
-            if(Validation.IS_STUDENT_NUMBER_EXISTS.test(studentNumberFromSelectedRow, DATABASE_CONNECTION)) {
+            if(Validation.IS_STUDENT_NUMBER_EXISTS.test(studentNumberFromSelectedRow, DATABASE_CONNECTION) || Validation.IS_STUDENT_NUMBER_EXISTS.test(studentNumber.getText().trim(), DATABASE_CONNECTION)) {
                 Process.removeStudent(DATABASE_CONNECTION, studentNumberFromSelectedRow);
                 PROMPT.show.accept("REMOVED SUCCESSFULLY", false);
                 removeTextFieldsValues();
@@ -465,7 +503,7 @@ public class Main extends javax.swing.JFrame {
         if(table.getModel().getRowCount() != 0) {
             String studentNumberFromSelectedRow = String.valueOf(table.getModel().getValueAt(table.getSelectedRow(), 0));
             if(Validation.IS_STUDENT_NUMBER_EXISTS.test(studentNumberFromSelectedRow, DATABASE_CONNECTION)) {
-                Student student = DATABASE_CONNECTION.getStudent(Validation.getStudentNumber(DATABASE_CONNECTION, studentNumberFromSelectedRow));
+                Student student = DATABASE_CONNECTION.getStudent(getStudentNumber(DATABASE_CONNECTION, studentNumberFromSelectedRow));
                 studentNumber.setText(" " + student.getStudentNumber());
                 name.setText(" " + student.getName());
                 age.setText(" " + String.valueOf(student.getAge()));
@@ -527,6 +565,7 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JButton refresh;
     private javax.swing.JButton save;
     private javax.swing.JButton search;
+    private javax.swing.JComboBox<String> searchingType;
     private javax.swing.JTextField studentNumber;
     private javax.swing.JLabel studentNumberLabel;
     public static javax.swing.JTable table;

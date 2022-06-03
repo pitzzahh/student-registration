@@ -3,4 +3,4 @@ com.pitzzahh.database
 com.pitzzahh.exception
 com.pitzzahh.validation
 com.pitzzahh.view
-entity
+com.pitzzahh.entity
