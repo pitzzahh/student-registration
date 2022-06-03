@@ -26,7 +26,7 @@ public interface StudentRegistrationValidator extends Function<Student, Validati
      */
     static StudentRegistrationValidator isStudentAlreadyExists(DatabaseConnection databaseConnection) {
         return student -> getStudentNumber(databaseConnection, String.valueOf(student.getStudentNumber()))
-                .equals(String.valueOf(student.getStudentNumber())) ? SUCCESS : STUDENT_ALREADY_EXIST;
+                .equals(String.valueOf(student.getStudentNumber())) ? STUDENT_ALREADY_EXIST : STUDENT_DOES_NOT_EXIST;
     }
 
     /**
@@ -41,5 +41,6 @@ public interface StudentRegistrationValidator extends Function<Student, Validati
         SUCCESS,
         STUDENT_NUMBER_NOT_VALID,
         STUDENT_ALREADY_EXIST,
+        STUDENT_DOES_NOT_EXIST
     }
 }

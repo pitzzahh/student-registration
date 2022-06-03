@@ -13,8 +13,11 @@ import java.sql.ResultSetMetaData;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import com.pitzzahh.entity.Student;
-import com.pitzzahh.validation.Validation;
+import com.pitzzahh.entity.SearchingType;
 import com.pitzzahh.exception.StudentNotFoundException;
+import com.pitzzahh.validation.StudentRegistrationValidator;
+import com.pitzzahh.exception.InvalidStudentNumberException;
+import static com.pitzzahh.validation.StudentRegistrationValidator.ValidationResult.*;
 
 /**
  *
@@ -23,11 +26,11 @@ import com.pitzzahh.exception.StudentNotFoundException;
 public class DatabaseConnection {
     private static String TABLE_NAME;
     private static final String CREATE_TABLE_STATEMENT = "CREATE TABLE IF NOT EXISTS students (" +
-                                                  "student_number VARCHAR(10) NOT NULL PRIMARY KEY," +
-                                                  "name VARCHAR(50) NULL, " +
-                                                  "age INT NOT NULL," +
-                                                  "address VARCHAR(150) NOT NULL," +
-                                                  "course VARCHAR(100) NOT NULL);";
+                                                          "student_number VARCHAR(10) NOT NULL PRIMARY KEY," +
+                                                          "name VARCHAR(50) NULL, " +
+                                                          "age INT NOT NULL," +
+                                                          "address VARCHAR(150) NOT NULL," +
+                                                          "course VARCHAR(100) NOT NULL);";
 
     /**
      * public Constructor.
@@ -115,11 +118,14 @@ public class DatabaseConnection {
         try {
             ResultSet resultSet = connect().createStatement().executeQuery(GET_ALL_DATA_QUERY.apply(TABLE_NAME));
             while (resultSet.next()) {
-                Main.students.add(new Student(resultSet.getInt("student_number"),
-                resultSet.getString("name"),
-                resultSet.getByte("age"),
-                resultSet.getString("address"),
-                resultSet.getString("course")));
+                Main.students.add(
+                        new Student(
+                                resultSet.getString("student_number"),
+                                resultSet.getString("name"),
+                                resultSet.getString("age"),
+                                resultSet.getString("address"),
+                                resultSet.getString("course"))
+                );
             }
         } catch (SQLException ignored) {
             throw new StudentNotFoundException();
@@ -136,11 +142,12 @@ public class DatabaseConnection {
             ResultSet resultSet = connect().createStatement().executeQuery(GET_ROW_QUERY.apply(studentNumber));
             if (resultSet.next()) {
                 return new Student(
-                    resultSet.getInt("student_number"),
-                    resultSet.getString("name"),
-                    resultSet.getByte("age"),
-                    resultSet.getString("address"),
-                    resultSet.getString("course"));
+                        resultSet.getString("student_number"),
+                        resultSet.getString("name"),
+                        resultSet.getString("age"),
+                        resultSet.getString("address"),
+                        resultSet.getString("course")
+                );
             }
         } catch (SQLException sqlException) {
             throw new StudentNotFoundException();
@@ -151,25 +158,45 @@ public class DatabaseConnection {
     /**
      * Method that search the table from the database and 
      * @param databaseConnection database connection object needed to connect to the database.
-     * @param studentNumber the student number needed to look up for student row to be fetched.
-     * @return s {@code Student} object. 
+     * @param student the student needed to look up for student row to be fetched.
      */
-    public static Object[] search(DatabaseConnection databaseConnection, String studentNumber) {
+    public static void search(DatabaseConnection databaseConnection, Student student, SearchingType searchingType) {
         try {
-            ResultSet resultSet = databaseConnection.connect().createStatement().executeQuery(Process.GET_STUDENT_QUERY.apply(studentNumber));
-            if (resultSet.next()) {
-                return new Object[] {
-                Integer.valueOf(resultSet.getString("student_number")),
-                resultSet.getString("name"),
-                (byte)resultSet.getInt("age"),
-                resultSet.getString("address"),
-                resultSet.getString("course")};
+            ResultSet resultSet = null;
+            switch (searchingType) {
+                case SEARCH_BY_STUDENT_NUMBER :
+                    if(StudentRegistrationValidator.isStudentNumberValid().apply(student) != SUCCESS) throw new InvalidStudentNumberException(String.valueOf(student.getStudentNumber()));
+                    resultSet = databaseConnection.connect().createStatement().executeQuery(Process.GET_STUDENT_QUERY_BY_STUDENT_NUMBER.apply(String.valueOf(student.getStudentNumber())));
+                    break;
+                case SEARCH_BY_STUDENT_NAME :
+                    resultSet = databaseConnection.connect().createStatement().executeQuery(Process.GET_STUDENT_QUERY_BY_STUDENT_NAME.apply(String.valueOf(student.getName())));
+                    break;
+                case SEARCH_BY_STUDENT_AGE :
+                    resultSet = databaseConnection.connect().createStatement().executeQuery(Process.GET_STUDENT_QUERY_BY_STUDENT_AGE.apply(String.valueOf(student.getAge())));
+                    break;
+                case SEARCH_BY_STUDENT_ADDRESS :
+                    resultSet = databaseConnection.connect().createStatement().executeQuery(Process.GET_STUDENT_QUERY_BY_STUDENT_ADDRESS.apply(String.valueOf(student.getAddress())));
+                    break;
+                case SEARCH_BY_STUDENT_COURSE :
+                    resultSet = databaseConnection.connect().createStatement().executeQuery(Process.GET_STUDENT_QUERY_BY_STUDENT_COURSE.apply(String.valueOf(student.getCourse())));
+                    break;
             }
-            else throw new StudentNotFoundException();
+            assert resultSet != null;
+            while (resultSet.next()) {
+                Main.students.add(
+                        new Student(
+                                resultSet.getString("student_number"),
+                                resultSet.getString("name"),
+                                resultSet.getString("age"),
+                                resultSet.getString("address"),
+                                resultSet.getString("course")
+                ));
+            }
+            if (Main.students.isEmpty()) throw new StudentNotFoundException();
+
         } catch (SQLException sqlException) {
-            if(Validation.IS_STUDENT_NUMBER_EXISTS.negate().test(studentNumber, databaseConnection)) throw new StudentNotFoundException();
+            if(StudentRegistrationValidator.isStudentAlreadyExists(databaseConnection).apply(student) == STUDENT_DOES_NOT_EXIST) throw new StudentNotFoundException();
             Main.PROMPT.show.accept(sqlException.getMessage(), true);
         }
-        return null;
     }
 }

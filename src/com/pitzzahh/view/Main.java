@@ -7,24 +7,25 @@ package com.pitzzahh.view;
 import java.awt.*;
 
 import com.pitzzahh.entity.Courses;
+import com.pitzzahh.entity.SearchingType;
 import com.pitzzahh.entity.Student;
 
+import java.awt.event.ActionEvent;
 import java.util.Arrays;
-import java.util.Objects;
 import javax.swing.JLabel;
 import java.util.ArrayList;
 import com.pitzzahh.database.Process;
 import com.pitzzahh.exception.EmptyTableException;
 import com.pitzzahh.validation.StudentRegistrationValidator;
-import com.pitzzahh.validation.Validation;
+
 import javax.swing.table.DefaultTableModel;
 import com.pitzzahh.database.DatabaseConnection;
 import javax.swing.table.DefaultTableCellRenderer;
 import com.pitzzahh.exception.BlankTextFieldsException;
 import com.pitzzahh.exception.InvalidStudentNumberException;
-
 import static com.pitzzahh.database.Process.getStudentNumber;
 import static com.pitzzahh.validation.StudentRegistrationValidator.ValidationResult.SUCCESS;
+import static com.pitzzahh.validation.StudentRegistrationValidator.ValidationResult.STUDENT_ALREADY_EXIST;
 
 /**
  *
@@ -46,16 +47,27 @@ public class Main extends javax.swing.JFrame {
 
         Arrays.stream(courses).forEach(course -> courseList[course.ordinal()] = course.getDescription());
 
-        course.setModel(new javax.swing.DefaultComboBoxModel<>(courseList));
+        courseSelection.setModel(new javax.swing.DefaultComboBoxModel<>(courseList));
+
+        // add enum types to JComboBox
+        SearchingType[] searchingTypes = SearchingType.values();
+        String[] allSearchingTypes = new String[searchingTypes.length];
+
+        Arrays.stream(searchingTypes).forEach(type -> allSearchingTypes[type.ordinal()] = type.name());
+
+        searchingType.setModel(new javax.swing.DefaultComboBoxModel<>(allSearchingTypes));
 
         setIconImage(Toolkit.getDefaultToolkit().getImage("src/com/pitzzahh/icons/ico.png"));
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(JLabel.CENTER);
         table.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
         table.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);
-        refreshTable(false, "");
+        refreshTable(false);
     }
 
+    private SearchingType getSearchingType() {
+        return SearchingType.valueOf(searchingType.getModel().getElementAt(searchingType.getSelectedIndex()));
+    }
     /**
      * Method that refresh the table.
      * <p>First it checks if the method is used for searching a student</p>
@@ -64,13 +76,24 @@ public class Main extends javax.swing.JFrame {
      * <p>Then reset the row count of the table to 0</p>
      * <p>Lastly, looping from the {@code students} ArrayList and adding each student in the row of the table.</p>
      */
-    private void refreshTable(boolean isSearching, String studentNumber) {
+    private void refreshTable(boolean isSearching) {
         if(isSearching) {
             try {
+                Main.DATABASE_CONNECTION.search(Main.DATABASE_CONNECTION, makeStudentFromTextField(), getSearchingType());
                 DefaultTableModel defaultTableModel = (DefaultTableModel) table.getModel();
                 defaultTableModel.setRowCount(0);
-                Object[] data = DatabaseConnection.search(Main.DATABASE_CONNECTION, studentNumber);
-                defaultTableModel.addRow(data);
+                Object[] data = new Object[defaultTableModel.getColumnCount()];
+
+
+                for (Student student : students) {
+                    data[0] = student.getStudentNumber();
+                    data[1] = student.getName();
+                    data[2] = student.getAge();
+                    data[3] = student.getAddress();
+                    data[4] = student.getCourse();
+                    defaultTableModel.addRow(data);
+                }
+
             } catch(RuntimeException runtimeException) {
                 PROMPT.show.accept(runtimeException.getMessage(), true);
             }
@@ -110,13 +133,22 @@ public class Main extends javax.swing.JFrame {
         address.setText(" ");
     }
 
-    private Student makeStudent() {
+    private Student makeStudentFromTextField() {
         return new Student(
-                Integer.parseInt(studentNumber.getText().trim()),
+                studentNumber.getText().trim(),
                 name.getText().trim(),
-                Byte.parseByte(age.getText().trim()),
+                age.getText().trim(),
                 address.getText().trim(),
-                course.getItemAt(course.getSelectedIndex()).trim()
+                courseSelection.getItemAt(courseSelection.getSelectedIndex()).trim()
+        );
+    }
+    private Student makeStudentFromTableSelection() {
+        return new Student(
+                String.valueOf(table.getModel().getValueAt(table.getSelectedRow(), 0)),
+                String.valueOf(table.getModel().getValueAt(table.getSelectedRow(), 1)),
+                String.valueOf(table.getModel().getValueAt(table.getSelectedRow(), 2)),
+                String.valueOf(table.getModel().getValueAt(table.getSelectedRow(), 3)),
+                String.valueOf(table.getModel().getValueAt(table.getSelectedRow(), 4))
         );
     }
 
@@ -146,7 +178,7 @@ public class Main extends javax.swing.JFrame {
         save = new javax.swing.JButton();
         search = new javax.swing.JButton();
         picture = new javax.swing.JLabel();
-        course = new javax.swing.JComboBox<>();
+        courseSelection = new javax.swing.JComboBox<>();
         headerPanel = new javax.swing.JPanel();
         header = new javax.swing.JLabel();
         refresh = new javax.swing.JButton();
@@ -272,7 +304,7 @@ public class Main extends javax.swing.JFrame {
 
         picture.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/pitzzahh/icons/students.png"))); // NOI18N
 
-        course.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        courseSelection.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
 
         headerPanel.setBackground(new java.awt.Color(204, 204, 204));
 
@@ -301,8 +333,6 @@ public class Main extends javax.swing.JFrame {
             }
         });
 
-        searchingType.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "SEARCH BY STUDENT NUMBER", "SEARCH BY NAME", "SEARCH BY ADDRESS", "SEARCH BY COURSE", "SEARCH BY STUDENT NUMBER AND NAME", "SEARCH BY STUDENT NUMBER AND COURSE" }));
-
         javax.swing.GroupLayout panelLayout = new javax.swing.GroupLayout(panel);
         panel.setLayout(panelLayout);
         panelLayout.setHorizontalGroup(
@@ -325,7 +355,7 @@ public class Main extends javax.swing.JFrame {
                     .addGroup(panelLayout.createSequentialGroup()
                         .addComponent(courseLabel)
                         .addGap(8, 8, 8)
-                        .addComponent(course, 0, 1, Short.MAX_VALUE))
+                        .addComponent(courseSelection, 0, 1, Short.MAX_VALUE))
                     .addGroup(panelLayout.createSequentialGroup()
                         .addComponent(ageLabel)
                         .addGap(6, 6, 6)
@@ -380,7 +410,7 @@ public class Main extends javax.swing.JFrame {
                         .addGap(12, 12, 12)
                         .addGroup(panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(courseLabel)
-                            .addComponent(course, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(courseSelection, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(35, 35, 35)
                         .addGroup(panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(add)
@@ -414,14 +444,13 @@ public class Main extends javax.swing.JFrame {
      * @param evt not used.
      */
     private void searchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchActionPerformed
+
         if(table.getModel().getRowCount() == 0 && students.isEmpty()) throw new EmptyTableException("NO DATA TO BE SEARCHED");
-        if (areTextFieldsEmpty()) throw new BlankTextFieldsException();
 
-        Student student = makeStudent();
+        Student student = makeStudentFromTextField();
 
-        if(StudentRegistrationValidator.isStudentNumberValid().apply(student) != SUCCESS) throw new InvalidStudentNumberException(String.valueOf(student.getStudentNumber()));
-        refreshTable(true, studentNumber.getText().trim());
-        if(table.getModel().getRowCount() == 1 && String.valueOf(table.getModel().getValueAt(0, 0)).equals(String.valueOf(student.getStudentNumber()).trim())) PROMPT.show.accept("SEARCHED SUCCESSFULLY", false);
+        refreshTable(true);
+        if (!Main.students.isEmpty()) PROMPT.show.accept("SEARCHED SUCCESSFULLY", false);
         removeTextFieldsValues();
 
     }//GEN-LAST:event_searchActionPerformed
@@ -432,89 +461,83 @@ public class Main extends javax.swing.JFrame {
             if(table.getModel().getRowCount() == 0) throw new EmptyTableException("NO DATA TO BE SAVED");
             if(areTextFieldsEmpty()) throw new BlankTextFieldsException();
 
-            String studentNumberFromSelectedRow = String.valueOf(table.getModel().getValueAt(table.getSelectedRow(), 0));
-            String studentNameFromSelectedRow = String.valueOf(table.getModel().getValueAt(table.getSelectedRow(), 1));
-            String studentAgeFromSelectedRow = String.valueOf(table.getModel().getValueAt(table.getSelectedRow(), 2));
-            String studentAddressFromSelectedRow = String.valueOf(table.getModel().getValueAt(table.getSelectedRow(), 3));
-            String studentCourseFromSelectedRow = String.valueOf(table.getModel().getValueAt(table.getSelectedRow(), 4));
+            Student newStudent = makeStudentFromTextField();
 
-            Student newStudent = makeStudent();
-
-            Student oldStudent = new Student(
-                    Integer.parseInt(studentNumberFromSelectedRow.trim()),
-                    studentNameFromSelectedRow,
-                    Byte.parseByte(studentAgeFromSelectedRow.trim()),
-                    studentAddressFromSelectedRow,
-                    studentCourseFromSelectedRow
-            );
+            Student oldStudent = makeStudentFromTableSelection();
 
             Process.updateStudent(DATABASE_CONNECTION, newStudent, oldStudent);
 
             PROMPT.show.accept("EDITED SUCCESSFULLY", false);
 
         } catch (RuntimeException runtimeException) {
-            runtimeException.printStackTrace();
             PROMPT.show.accept(runtimeException.getMessage(), true);
         }
         students.clear();
         removeTextFieldsValues();
-        refreshTable(false, "");
+        refreshTable(false);
     }//GEN-LAST:event_saveActionPerformed
 
     private void deleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteActionPerformed
-        if(table.getModel().getRowCount() == 0 || areTextFieldsEmpty()) PROMPT.show.accept("NO DATA TO BE REMOVED!\nPLEASE SELECT A ROW FROM THE TABLE IF DATA IS AVAILABLE", true);
-        else{
-            String studentNumberFromSelectedRow = String.valueOf(table.getModel().getValueAt(table.getSelectedRow(), 0));
-            if(Validation.IS_STUDENT_NUMBER_EXISTS.test(studentNumberFromSelectedRow, DATABASE_CONNECTION) || Validation.IS_STUDENT_NUMBER_EXISTS.test(studentNumber.getText().trim(), DATABASE_CONNECTION)) {
-                Process.removeStudent(DATABASE_CONNECTION, studentNumberFromSelectedRow);
+        try {
+            if(table.getModel().getRowCount() == 0) throw new EmptyTableException("NO DATA TO BE REMOVED!\nPLEASE SELECT A ROW FROM THE TABLE IF DATA IS AVAILABLE");
+            else if (areTextFieldsEmpty()) throw new BlankTextFieldsException();
+            Student studentFromTableSelection = makeStudentFromTableSelection();
+            Student studentFromTextField = makeStudentFromTextField();
+
+            if(StudentRegistrationValidator.isStudentAlreadyExists(DATABASE_CONNECTION).apply(studentFromTableSelection).equals(STUDENT_ALREADY_EXIST) ||
+                    StudentRegistrationValidator.isStudentAlreadyExists(DATABASE_CONNECTION).apply(studentFromTextField).equals(STUDENT_ALREADY_EXIST)) {
+                Process.removeStudent(DATABASE_CONNECTION, studentFromTextField.getStudentNumber());
                 PROMPT.show.accept("REMOVED SUCCESSFULLY", false);
                 removeTextFieldsValues();
             }
+            students.clear();
+            removeTextFieldsValues();
+            refreshTable(false);
+        } catch (RuntimeException runtimeException) {
+            PROMPT.show.accept(runtimeException.getMessage(), true);
         }
-        students.clear();
-        removeTextFieldsValues();
-        refreshTable(false, "");
     }//GEN-LAST:event_deleteActionPerformed
 
     private void addActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addActionPerformed
         try {
             if(areTextFieldsEmpty()) throw new BlankTextFieldsException();
-            else {
-                if(Validation.IS_STUDENT_NUMBER_VALID.negate().test(studentNumber.getText().trim())) throw new InvalidStudentNumberException(studentNumber.getText().trim());
-                Process.insertData(
-                        DATABASE_CONNECTION,
-                        studentNumber.getText().trim(),
-                        name.getText().trim(),
-                        age.getText().trim(),
-                        address.getText().trim(),
-                        course.getItemAt(course.getSelectedIndex()));
-                PROMPT.show.accept("ADDED SUCCESSFULLY", false);
-            }
+            Student student = makeStudentFromTextField();
+
+            if(StudentRegistrationValidator.isStudentNumberValid().apply(student) != SUCCESS) throw new InvalidStudentNumberException(studentNumber.getText().trim());
+            Process.insertData(
+                    DATABASE_CONNECTION,
+                    student.getStudentNumber(),
+                    student.getName(),
+                    student.getAge(),
+                    student.getAddress(),
+                    courseSelection.getItemAt(courseSelection.getSelectedIndex()));
+            PROMPT.show.accept("ADDED SUCCESSFULLY", false);
+
         } catch(RuntimeException runtimeException) {
             PROMPT.show.accept(runtimeException.getMessage(), true);
         }
         students.clear();
         removeTextFieldsValues();
-        refreshTable(false, "");
+        refreshTable(false);
         
     }//GEN-LAST:event_addActionPerformed
 
     private void tableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tableMouseClicked
         if(table.getModel().getRowCount() != 0) {
-            String studentNumberFromSelectedRow = String.valueOf(table.getModel().getValueAt(table.getSelectedRow(), 0));
-            if(Validation.IS_STUDENT_NUMBER_EXISTS.test(studentNumberFromSelectedRow, DATABASE_CONNECTION)) {
-                Student student = DATABASE_CONNECTION.getStudent(getStudentNumber(DATABASE_CONNECTION, studentNumberFromSelectedRow));
-                studentNumber.setText(" " + student.getStudentNumber());
-                name.setText(" " + student.getName());
-                age.setText(" " + String.valueOf(student.getAge()));
-                address.setText(" " + student.getAddress());
-                course.getModel().setSelectedItem(student.getCourse());
+            Student student = makeStudentFromTableSelection();
+            if(StudentRegistrationValidator.isStudentAlreadyExists(DATABASE_CONNECTION).apply(student) == STUDENT_ALREADY_EXIST) {
+                Student studentFromDatabaseTable = DATABASE_CONNECTION.getStudent(getStudentNumber(DATABASE_CONNECTION, student.getStudentNumber()));
+                studentNumber.setText(" " + studentFromDatabaseTable.getStudentNumber());
+                name.setText(" " + studentFromDatabaseTable.getName());
+                age.setText(" " + String.valueOf(studentFromDatabaseTable.getAge()));
+                address.setText(" " + studentFromDatabaseTable.getAddress());
+                courseSelection.getModel().setSelectedItem(studentFromDatabaseTable.getCourse());
             }
         }
     }//GEN-LAST:event_tableMouseClicked
     
     private void refreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_refreshActionPerformed
-        refreshTable(false, "");
+        refreshTable(false);
         removeTextFieldsValues();
     }//GEN-LAST:event_refreshActionPerformed
     
@@ -553,8 +576,8 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JLabel addressLabel;
     private javax.swing.JTextField age;
     private javax.swing.JLabel ageLabel;
-    private javax.swing.JComboBox<String> course;
     private javax.swing.JLabel courseLabel;
+    private javax.swing.JComboBox<String> courseSelection;
     private javax.swing.JButton delete;
     private javax.swing.JLabel header;
     private javax.swing.JPanel headerPanel;

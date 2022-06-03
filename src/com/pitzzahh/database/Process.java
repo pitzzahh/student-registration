@@ -6,22 +6,20 @@ package com.pitzzahh.database;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.sql.ResultSet;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.io.BufferedWriter;
-
 import com.pitzzahh.entity.Student;
-import com.pitzzahh.validation.StudentRegistrationValidator;
-
 import java.sql.PreparedStatement;
 import java.util.function.Function;
-
-import static com.pitzzahh.validation.StudentRegistrationValidator.ValidationResult.SUCCESS;
 import static com.pitzzahh.view.Main.PROMPT;
 import com.pitzzahh.exception.StudentNotFoundException;
 import com.pitzzahh.exception.StudentAlreadyExistsException;
 import com.pitzzahh.exception.InvalidStudentNumberException;
+import com.pitzzahh.validation.StudentRegistrationValidator;
+import static com.pitzzahh.validation.StudentRegistrationValidator.ValidationResult.SUCCESS;
+import static com.pitzzahh.validation.StudentRegistrationValidator.ValidationResult.STUDENT_DOES_NOT_EXIST;
 
 /**
  *
@@ -128,12 +126,12 @@ public class Process {
                                             "WHERE student_number = " + "'" + oldStudent.getStudentNumber() + "'";
 
             if(StudentRegistrationValidator.isStudentNumberValid().apply(newStudentUpdate) != SUCCESS) throw new InvalidStudentNumberException(String.valueOf(newStudentUpdate.getStudentNumber()).trim());
-            if(StudentRegistrationValidator.isStudentAlreadyExists(databaseConnection).apply(oldStudent) != SUCCESS) throw new StudentNotFoundException();
+            if(StudentRegistrationValidator.isStudentAlreadyExists(databaseConnection).apply(oldStudent) == STUDENT_DOES_NOT_EXIST) throw new StudentNotFoundException();
 
             PreparedStatement preparedStatement = databaseConnection.connect().prepareStatement(UPDATE_STATEMENT);
             preparedStatement.setString(1, String.valueOf(newStudentUpdate.getStudentNumber()).trim());
             preparedStatement.setString(2, newStudentUpdate.getName().trim());
-            preparedStatement.setInt(3, newStudentUpdate.getAge());
+            preparedStatement.setInt(3, Integer.parseInt(newStudentUpdate.getAge()));
             preparedStatement.setString(4, newStudentUpdate.getAddress().trim());
             preparedStatement.setString(5, newStudentUpdate.getCourse().trim());
             preparedStatement.executeUpdate();
@@ -153,6 +151,26 @@ public class Process {
     /**
      * Function that returns a String query in getting the all the student info from the table in the database.
      */
-    public static final Function<String, String> GET_STUDENT_QUERY = studentNumber -> "SELECT * FROM students WHERE student_number = " + "'" + studentNumber + "'";
+    public static final Function<String, String> GET_STUDENT_QUERY_BY_STUDENT_NUMBER = studentNumber -> "SELECT * FROM students WHERE student_number = " + "'" + studentNumber + "'";
+
+    /**
+     * Function that returns a String query on getting student from the table using name.
+     */
+    public static Function<String, String>  GET_STUDENT_QUERY_BY_STUDENT_NAME = studentName -> "SELECT * FROM students WHERE name = " + "'" + studentName + "'";
+
+    /**
+     * Function that returns a String query on getting student from the table using age.
+     */
+    public static Function<String, String>  GET_STUDENT_QUERY_BY_STUDENT_AGE = studentAge -> "SELECT * FROM students WHERE age = " + "'" + studentAge + "'";
+
+    /**
+     * Function that returns a String query on getting student from the table using address.
+     */
+    public static Function<String, String>  GET_STUDENT_QUERY_BY_STUDENT_ADDRESS = studentAddress -> "SELECT * FROM students WHERE address = " + "'" + studentAddress + "'";
+
+    /**
+     * Function that returns a String query on getting student from the table using course.
+     */
+    public static Function<String, String>  GET_STUDENT_QUERY_BY_STUDENT_COURSE = studentCourse -> "SELECT * FROM students WHERE course = " + "'" + studentCourse + "'";
 
 }

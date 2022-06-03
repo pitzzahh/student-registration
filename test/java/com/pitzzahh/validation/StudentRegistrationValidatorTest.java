@@ -1,35 +1,29 @@
 package com.pitzzahh.validation;
 
+import com.pitzzahh.view.Main;
 import org.junit.jupiter.api.Test;
 import com.pitzzahh.entity.Student;
+import com.pitzzahh.entity.Courses;
 import com.pitzzahh.database.DatabaseConnection;
 import static org.junit.jupiter.api.Assertions.*;
+import static com.pitzzahh.entity.SearchingType.SEARCH_BY_STUDENT_NUMBER;
 
 class StudentRegistrationValidatorTest {
-
-    private final Student underTest = new Student(
-            2000263444,
-            "Peter John Arao",
-            (byte)19,
-            "Buyoan, Legazpi City Albay",
-            "Bachelor of Science in Information Technology"
-    );
 
     @Test
     void shouldPassIfStudentAlreadyExist() {
         // given
-        String studentNumberToFind = "2000263444";
-        // when
-        Object[] result = DatabaseConnection.search(new DatabaseConnection(), studentNumberToFind);
-        // then
-        assert result != null;
-        assertEquals(underTest.toString(), new Student(
-                Integer.parseInt(result[0].toString()),
-                result[1].toString(),
-                Byte.parseByte(result[2].toString()),
-                result[3].toString(),
-                result[4].toString())
-                .toString()
+        Student student = new Student(
+                "2000263444",
+                "Peter John Arao",
+                "19",
+                "Legazpi City",
+                Courses.BSIT.getDescription()
         );
+        // when
+        DatabaseConnection.search(new DatabaseConnection(), student, SEARCH_BY_STUDENT_NUMBER);
+        // then
+
+        assertEquals(student.toString(), Main.students.get(0).toString());
     }
 }

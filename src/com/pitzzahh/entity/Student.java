@@ -9,13 +9,13 @@ package com.pitzzahh.entity;
  * @author peter
  */
 public class Student {
-    private int studentNumber;
+    private String studentNumber;
     private String name;
-    private byte age;
+    private String age;
     private String address;
     private String course;
 
-    public Student(int studentNumber, String name, byte age, String address, String course) {
+    public Student(String studentNumber, String name, String age, String address, String course) {
         this.studentNumber = studentNumber;
         this.name = name;
         this.age = age;
@@ -23,11 +23,11 @@ public class Student {
         this.course = course;
     }
 
-    public int getStudentNumber() {
+    public String getStudentNumber() {
         return studentNumber;
     }
 
-    public void setStudentNumber(int studentNumber) {
+    public void setStudentNumber(String studentNumber) {
         this.studentNumber = studentNumber;
     }
 
@@ -39,11 +39,11 @@ public class Student {
         this.name = name;
     }
 
-    public byte getAge() {
+    public String getAge() {
         return age;
     }
 
-    public void setAge(byte age) {
+    public void setAge(String age) {
         this.age = age;
     }
 
