@@ -5,8 +5,8 @@
  */
 package com.pitzzahh.view;
 
-import java.util.function.BiConsumer;
 import javax.swing.*;
+import java.util.function.BiConsumer;
 
 /**
  *
@@ -20,6 +20,12 @@ public class Prompt {
      * If the prompt is for error, it shows a message dialog that informs the user what is the error.
      * If the prompt is for information message, the message will be based on the methods that invoked the Function.
      */
-    public final BiConsumer<String, Boolean> show = (message, isError) -> JOptionPane.showMessageDialog(null, message, (isError ? "SOMETHING WENT WRONG" : "SUCCESS"), (isError ? JOptionPane.WARNING_MESSAGE : JOptionPane.INFORMATION_MESSAGE));
+    public final BiConsumer<String, Boolean> show = (message, isError) ->
+            JOptionPane.showMessageDialog(
+                            null,
+                                          message,
+                                         (isError ? "SOMETHING WENT WRONG" : "SUCCESS"),
+                                         (isError ? JOptionPane.WARNING_MESSAGE : JOptionPane.INFORMATION_MESSAGE)
+            );
 
 }

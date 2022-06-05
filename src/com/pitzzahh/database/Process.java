@@ -5,14 +5,17 @@
 package com.pitzzahh.database;
 
 import java.io.File;
-import java.io.FileWriter;
+import java.sql.Date;
 import java.sql.ResultSet;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.sql.SQLException;
 import java.io.BufferedWriter;
-import com.pitzzahh.entity.Student;
 import java.sql.PreparedStatement;
+import com.pitzzahh.entity.Student;
 import java.util.function.Function;
+import java.util.function.BiFunction;
 import static com.pitzzahh.view.Main.PROMPT;
 import com.pitzzahh.exception.StudentNotFoundException;
 import com.pitzzahh.exception.StudentAlreadyExistsException;
@@ -75,15 +78,19 @@ public class Process {
         String name,
         String age,
         String address,
+        LocalDate dateOfBirth,
+        String email,
         String course) {
-        final String INSERT_STATEMENT = "INSERT INTO students (student_number, name, age, address, course) VALUES (?, ?, ?, ?, ?);";
+        final String INSERT_STATEMENT = "INSERT INTO students (student_number, name, age, address, date_of_birth, email, course) VALUES (?, ?, ?, ?, ?, ?, ?);";
         try {
             PreparedStatement preparedStatement = databaseConnection.connect().prepareStatement(INSERT_STATEMENT);
-            preparedStatement.setString(1, studentNumber);
-            preparedStatement.setString(2, name);
+            preparedStatement.setString(1, studentNumber.trim());
+            preparedStatement.setString(2, name.trim());
             preparedStatement.setInt(3, Integer.parseInt(age.trim()));
-            preparedStatement.setString(4, address);
-            preparedStatement.setString(5, course);  
+            preparedStatement.setString(4, address.trim());
+            preparedStatement.setDate(5, Date.valueOf(dateOfBirth));
+            preparedStatement.setString(6, email.trim());
+            preparedStatement.setString(7, course.trim());
             
             preparedStatement.executeUpdate();
         } catch (SQLException sqlException) {
@@ -122,6 +129,8 @@ public class Process {
                                             "name = ?, " +
                                             "age = ?, " +
                                             "address = ?, " +
+                                            "date_of_birth = ?, " +
+                                            "email = ?, " +
                                             "course = ? " +
                                             "WHERE student_number = " + "'" + oldStudent.getStudentNumber() + "'";
 
@@ -133,9 +142,11 @@ public class Process {
             preparedStatement.setString(2, newStudentUpdate.getName().trim());
             preparedStatement.setInt(3, Integer.parseInt(newStudentUpdate.getAge()));
             preparedStatement.setString(4, newStudentUpdate.getAddress().trim());
-            preparedStatement.setString(5, newStudentUpdate.getCourse().trim());
+            preparedStatement.setDate(5, Date.valueOf(newStudentUpdate.getDateOfBirth()));
+            preparedStatement.setString(6, newStudentUpdate.getEmail().trim());
+            preparedStatement.setString(7, newStudentUpdate.getCourse().trim());
             preparedStatement.executeUpdate();
-
+            PROMPT.show.accept("EDITED SUCCESSFULLY", false);
         } catch (SQLException sqlException) {
             sqlException.printStackTrace();
             PROMPT.show.accept(sqlException.getMessage(), true);
@@ -172,5 +183,10 @@ public class Process {
      * Function that returns a String query on getting student from the table using course.
      */
     public static Function<String, String>  GET_STUDENT_QUERY_BY_STUDENT_COURSE = studentCourse -> "SELECT * FROM students WHERE course = " + "'" + studentCourse + "'";
+
+    /**
+     * Function that returns a String query on getting student from the table using studentNumber and studentName.
+     */
+    public static BiFunction<String, String, String> GET_STUDENT_QUERY_BY_STUDENT_NUMBER_AND_STUDENT_NAME = (studentNumber, studentName) -> "SELECT * FROM students WHERE student_number = " + "'" + studentNumber + "'" + " AND name = " + "'" + studentName + "'";
 
 }
