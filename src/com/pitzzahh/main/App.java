@@ -5,7 +5,9 @@
  */
 package com.pitzzahh.main;
 
-import com.pitzzahh.view.Main;
+import com.pitzzahh.database.DatabaseConnection;
+
+import java.util.Arrays;
 
 /**
  *
@@ -13,6 +15,11 @@ import com.pitzzahh.view.Main;
  */
 public class App {
     public static void main(String[] args) {
-        new Main().run();
+        DatabaseConnection databaseConnection = new DatabaseConnection();
+        String columnNames = Arrays.stream(databaseConnection.getAllTableColumnName())
+                                   .map(String::toUpperCase)
+                                   .reduce("", String::concat);
+
+        System.out.println(columnNames);
     }
 }

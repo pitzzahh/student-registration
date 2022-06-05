@@ -63,7 +63,7 @@ public class Main extends javax.swing.JFrame {
         table.getColumnModel().getColumn(4).setCellRenderer(centerRenderer);
         refreshTable(false);
     }
-
+    
     private SearchingType getSearchingType() {
         return SearchingType.valueOf(searchingType.getModel().getElementAt(searchingType.getSelectedIndex()));
     }
@@ -124,6 +124,7 @@ public class Main extends javax.swing.JFrame {
         address.setText(" ");
         dateOfBirth.setDate(null);
         email.setText(" ");
+        courseSelection.getModel().setSelectedItem(courseSelection.getItemAt(0));
     }
 
     private Student makeStudentFromTextField() {
@@ -365,7 +366,7 @@ public class Main extends javax.swing.JFrame {
             .addGroup(panelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(tableScroll)
-                .addGap(16, 16, 16))
+                .addContainerGap())
             .addGroup(panelLayout.createSequentialGroup()
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(headerPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -492,8 +493,10 @@ public class Main extends javax.swing.JFrame {
 
     private void saveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveActionPerformed
         try {
-            if(table.getModel().getRowCount() == 0) throw new EmptyTableException("NO DATA TO BE SAVED");
-            if(areTextFieldsEmpty()) throw new BlankTextFieldsException();
+            if(table.getModel().getRowCount() == 0 || areTextFieldsEmpty()) {
+                if (areTextFieldsEmpty()) throw new BlankTextFieldsException();
+                throw new EmptyTableException("NO DATA TO BE EDITED!\nPLEASE SELECT A ROW FROM THE TABLE IF DATA IS AVAILABLE");
+            }
             Process.updateStudent(DATABASE_CONNECTION, makeStudentFromTextField(), makeStudentFromTableSelection());
         } catch (RuntimeException runtimeException) {
             PROMPT.show.accept(runtimeException.getMessage(), true);
@@ -513,7 +516,6 @@ public class Main extends javax.swing.JFrame {
             if(StudentRegistrationValidator.isStudentAlreadyExists(DATABASE_CONNECTION).apply(studentFromTextField).equals(SUCCESS)) {
                 Process.removeStudent(DATABASE_CONNECTION, studentFromTextField.getStudentNumber());
                 PROMPT.show.accept("REMOVED SUCCESSFULLY", false);
-                removeInputValues();
             }
         } catch (RuntimeException runtimeException) {
             PROMPT.show.accept(runtimeException.getMessage(), true);
@@ -539,7 +541,6 @@ public class Main extends javax.swing.JFrame {
                     student.getEmail(),
                     courseSelection.getItemAt(courseSelection.getSelectedIndex()));
             PROMPT.show.accept("ADDED SUCCESSFULLY", false);
-
         } catch(RuntimeException runtimeException) {
             PROMPT.show.accept(runtimeException.getMessage(), true);
         }

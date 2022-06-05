@@ -187,6 +187,24 @@ public class Process {
     /**
      * Function that returns a String query on getting student from the table using studentNumber and studentName.
      */
-    public static BiFunction<String, String, String> GET_STUDENT_QUERY_BY_STUDENT_NUMBER_AND_STUDENT_NAME = (studentNumber, studentName) -> "SELECT * FROM students WHERE student_number = " + "'" + studentNumber + "'" + " AND name = " + "'" + studentName + "'";
+    public static BiFunction<String, String, String> GET_STUDENT_QUERY_BY_STUDENT_NUMBER_AND_STUDENT_NAME =
+            (studentNumber, studentName) -> "SELECT * FROM students WHERE student_number = " + "'" + studentNumber + "'" + " AND name = " + "'" + studentName + "'";
+
+    public static BiFunction<String, String, String> GET_STUDENT_QUERY_BY_STUDENT_NUMBER_AND_STUDENT_AGE =
+            (studentNumber, studentAge) -> "SELECT * FROM students WHERE student_number = " + "'" + studentNumber + "'" + " AND age = " + "'" + studentAge + "'";
+    public static BiFunction<String, String, String> GET_STUDENT_QUERY_BY_STUDENT_NUMBER_AND_STUDENT_ADDRESS =
+            (studentNumber, studentAddress) -> "SELECT * FROM students WHERE student_number = " + "'" + studentNumber + "'" + " AND address = " + "'" + studentAddress + "'";
+    public static BiFunction<String, String, String> GET_STUDENT_QUERY_BY_STUDENT_NUMBER_AND_STUDENT_COURSE =
+            (studentNumber, studentCourse) -> "SELECT * FROM students WHERE student_number = " + "'" + studentNumber + "'" + " AND course = " + "'" + studentCourse + "'";
+    public static BiFunction<String, String, String> GET_STUDENT_QUERY_BY_STUDENT_NAME_AND_STUDENT_AGE =
+            (studentName, studentAge) -> "SELECT * FROM students WHERE name = " + "'" + studentName + "'" + " AND age = " + "'" + studentAge + "'";
+    public static BiFunction<String, String, String> GET_STUDENT_QUERY_BY_STUDENT_NAME_AND_STUDENT_ADDRESS =
+            (studentName, studentAddress) -> "SELECT * FROM students WHERE name = " + "'" + studentName + "'" + " AND address = " + "'" + studentAddress + "'";
+    public static BiFunction<String, String, String> GET_STUDENT_QUERY_BY_STUDENT_NAME_AND_STUDENT_COURSE =
+            (studentName, studentCourse) -> "SELECT * FROM students WHERE name = " + "'" + studentName + "'" + " AND course = " + "'" + studentCourse + "'";
+    public static BiFunction<String, String, String> GET_STUDENT_QUERY_BY_STUDENT_AGE_AND_STUDENT_ADDRESS =
+            (studentAge, studentAddress) -> "SELECT * FROM students WHERE age = " + "'" + studentAge + "'" + " AND address = " + "'" + studentAddress + "'";
+    public static BiFunction<String, String, String> GET_STUDENT_QUERY_BY_STUDENT_ADDRESS_AND_STUDENT_COURSE =
+            (studentAddress, studentCourse) -> "SELECT * FROM students WHERE address = " + "'" + studentAddress + "'" + " AND course = " + "'" + studentAddress + "'";
 
 }
